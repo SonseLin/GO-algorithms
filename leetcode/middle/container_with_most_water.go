@@ -2,44 +2,25 @@ package main
 
 import "fmt"
 
-// passed 55/61 tests except for 1000+ values
-
 func maxArea(height []int) int {
-	maxArea := 0
-	secondMax := 0
-	savedVI := 0
-	savedVJ := 0
-	for i, vi := range height[0 : len(height)-1] {
-		measure := vi
-		if savedVI == vi && i < len(height)-1 {
-			continue
+	l, maxAreaV := 0, 0
+	r := len(height) - 1
+	for l < r {
+		minV := height[l]
+		if height[l] > height[r] {
+			minV = height[r]
+		}
+		currArea := minV * (r - l)
+		if currArea > maxAreaV {
+			maxAreaV = currArea
+		}
+		if height[l] < height[r] {
+			l++
 		} else {
-			savedVI = vi
+			r--
 		}
-		for j, vj := range height[1:] {
-			j++
-			if savedVJ == vj && j < len(height)-1 && savedVJ == height[j+1] {
-				continue
-			} else {
-				savedVJ = vj
-			}
-			if i != j {
-				if vj > secondMax {
-					secondMax = vj
-				}
-				if vi > vj {
-					measure = vj
-				}
-				measure *= j - i
-				if maxArea < measure {
-					maxArea = measure
-				}
-				measure = vi
-			}
-		}
-		secondMax = 0
 	}
-	return maxArea
+	return maxAreaV
 }
 
 func main() {
