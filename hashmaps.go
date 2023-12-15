@@ -6,6 +6,10 @@ type hashBookValue struct {
 	value []int
 }
 
+func (hbv *hashBookValue) String() string {
+	return fmt.Sprintf("includes node%v", hbv.value)
+}
+
 func hashFunc(value, size int) int {
 	return value % size
 }
@@ -32,6 +36,6 @@ func main() {
 	hashBook := make(map[int]*hashBookValue, size)
 	processLoop(50, 400, 13, hashBook, size, insertPassCollision)
 	for i, v := range hashBook {
-		fmt.Printf("Hash key [%d] has value %v\n", i, v)
+		fmt.Printf("Hash key [%d] %+v\n", i, v)
 	}
 }
