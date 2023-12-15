@@ -6,6 +6,10 @@ type hashBookValue struct {
 	value []int
 }
 
+func hashFunc(value, size int) int {
+	return value % size
+}
+
 func processLoop(from, to, by int, hb map[int]*hashBookValue, size int, fun func(map[int]*hashBookValue, int, int)) {
 	for i := from; i < to; i += by {
 		fun(hb, size, i)
@@ -13,12 +17,13 @@ func processLoop(from, to, by int, hb map[int]*hashBookValue, size int, fun func
 }
 
 func insertPassCollision(hashBook map[int]*hashBookValue, size, value int) {
-	v, ok := hashBook[value%size]
+	place := hashFunc(value, size)
+	v, ok := hashBook[place]
 	if ok == true {
-		v.value = append(v.value, value%size)
-		hashBook[value%size].value = append(hashBook[value%size].value, value)
+		v.value = append(v.value, place)
+		hashBook[place].value = append(hashBook[place].value, value)
 	} else {
-		hashBook[value%size] = &hashBookValue{value: []int{value}}
+		hashBook[place] = &hashBookValue{value: []int{value}}
 	}
 }
 
