@@ -8,8 +8,10 @@ import (
 type currentNavigationRoot struct {
 	location            string
 	directions          map[string]*currentNavigationRoot
-	distance            int
+	distance            float64
 	latitude, longitude float64
+	shortestPath        string
+	isVisited           bool
 }
 
 func distance(from, to currentNavigationRoot) float64 {
@@ -52,25 +54,79 @@ func getGraph() *currentNavigationRoot {
 		latitude:   55.79,
 		longitude:  49.12,
 	}
+	perm := &currentNavigationRoot{
+		location:   "perm",
+		directions: make(map[string]*currentNavigationRoot),
+		distance:   0,
+		latitude:   58.01,
+		longitude:  56.23,
+	}
+	tver := &currentNavigationRoot{
+		location:   "tver",
+		directions: make(map[string]*currentNavigationRoot),
+		distance:   0,
+		latitude:   56.86,
+		longitude:  35.92,
+	}
+	ebaniiGorod := &currentNavigationRoot{
+		location:   "ebanii",
+		directions: make(map[string]*currentNavigationRoot),
+		distance:   0,
+		latitude:   100,
+		longitude:  100,
+		isVisited:  false,
+	}
+	ekata := &currentNavigationRoot{
+		location:   "ekata",
+		directions: make(map[string]*currentNavigationRoot),
+		distance:   0,
+		latitude:   56.84,
+		longitude:  60.65,
+	}
+	ufa := &currentNavigationRoot{
+		location:   "ufa",
+		directions: make(map[string]*currentNavigationRoot),
+		distance:   0,
+		latitude:   54.74,
+		longitude:  55.96,
+	}
 	navGraph.directions["moscow"] = moscow
+
 	moscow.directions["piter"] = navGraph
 	moscow.directions["kazan"] = kazan
+
 	kazan.directions["moscow"] = moscow
+	kazan.directions["ebanii"] = ebaniiGorod
+	kazan.directions["perm"] = perm
+	kazan.directions["tver"] = tver
+
+	ebaniiGorod.directions["tver"] = tver
+
+	tver.directions["kazan"] = kazan
+	tver.directions["perm"] = perm
+	tver.directions["ekata"] = ekata
+	tver.directions["ufa"] = ufa
+
+	perm.directions["ekata"] = ekata
+	perm.directions["kazan"] = kazan
+	perm.directions["tver"] = tver
+
+	ekata.directions["perm"] = perm
+	ekata.directions["tver"] = tver
+
+	ufa.directions["tver"] = tver
 	return navGraph
 }
 
-func main() {
-	// setup
-	totalTravelDistance := 0.0
-	var destinationCity string
-	currentLocation := getGraph()
+func interactiveNavigation(totalTravelDistance *float64, currentLocation *currentNavigationRoot) {
 	ok := true
-	fmt.Println(currentLocation.directions["kazan"])
-	// cycle
+	var destinationCity string
 	for ok {
 		fmt.Printf("from %s you can go on to:\n", currentLocation.location)
+		count := 0
 		for _, city := range currentLocation.directions {
-			fmt.Println(city.location)
+			count++
+			fmt.Printf("%d) %s\n", count, city.location)
 		}
 		_, err := fmt.Scanf("%s", &destinationCity)
 		if err == nil {
@@ -79,13 +135,98 @@ func main() {
 				ok = false
 			}
 			if destCity != nil {
-				fmt.Println("travelled to", destinationCity)
-				totalTravelDistance += distance(*currentLocation, *destCity)
+				*totalTravelDistance += distance(*currentLocation, *destCity)
+				fmt.Println("travelled to", destinationCity, "\nTravelled distance is", *totalTravelDistance)
 				currentLocation = destCity
 			} else {
 				fmt.Println("no city to travel", destinationCity)
 			}
 		}
 	}
+}
+
+func interactiveMode(currentLocation *currentNavigationRoot) {
+	totalTravelDistance := 0.0
+	interactiveNavigation(&totalTravelDistance, currentLocation)
 	fmt.Println("total travelled distance is", totalTravelDistance)
+}
+
+func DFS(cities *currentNavigationRoot, destPoint **currentNavigationRoot, curr, dest string, totalDistance *float64) bool {
+	if curr == dest {
+		if *totalDistance == 0 {
+			*totalDistance = cities.distance
+		} else if *totalDistance != 0 && *totalDistance > cities.distance {
+			*totalDistance = cities.distance
+		}
+		*destPoint = cities
+		return true
+	}
+	if cities.isVisited {
+		return false
+	}
+	cities.isVisited = true
+	for _, city := range cities.directions {
+		potentialDistance := cities.distance + distance(*cities, *city)
+		// если новое расстояние меньше старого или не определено
+		if city.distance == 0 || city.distance > potentialDistance {
+			city.shortestPath = cities.location
+			city.distance = potentialDistance
+		}
+	}
+	for _, city := range cities.directions {
+		if !city.isVisited {
+			endpoint := DFS(city, destPoint, city.location, dest, totalDistance)
+			if endpoint {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func searchShortPathMode(currentLocation *currentNavigationRoot) {
+	var destination string
+	var shortestPath []string
+	_, err := fmt.Scanf("%s", &destination)
+	if err == nil {
+		totalDistance := 0.0
+		var endPoint *currentNavigationRoot
+		for i := 0; i < 20; i++ {
+			ok := DFS(currentLocation, &endPoint, currentLocation.location, destination, &totalDistance)
+			if ok == true {
+				fmt.Println("shortest path to", endPoint.location, "is", totalDistance, "includes cities:")
+				for endPoint != currentLocation {
+					shortestPath = append(shortestPath, endPoint.location)
+					endPoint = endPoint.directions[endPoint.shortestPath]
+				}
+				shortestPath = append(shortestPath, currentLocation.location)
+			}
+		}
+	} else {
+		panic(err)
+	}
+	for _, i := range shortestPath {
+		fmt.Println(i)
+	}
+}
+
+func main() {
+	defer func() {
+		if v := recover(); v != nil {
+			fmt.Println("follow code rules, input int")
+		}
+	}()
+	currentLocation := getGraph()
+	var mode int
+	_, err := fmt.Scanf("%d", &mode)
+	if err == nil {
+		switch mode {
+		case 1:
+			interactiveMode(currentLocation)
+		case 2:
+			searchShortPathMode(currentLocation)
+		}
+	} else {
+		panic(err)
+	}
 }
