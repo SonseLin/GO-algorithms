@@ -191,16 +191,16 @@ func searchShortPathMode(currentLocation *currentNavigationRoot) {
 	if err == nil {
 		totalDistance := 0.0
 		var endPoint *currentNavigationRoot
-		for i := 0; i < 20; i++ {
-			ok := DFS(currentLocation, &endPoint, currentLocation.location, destination, &totalDistance)
-			if ok == true {
-				fmt.Println("shortest path to", endPoint.location, "is", totalDistance, "includes cities:")
-				for endPoint != currentLocation {
-					shortestPath = append(shortestPath, endPoint.location)
-					endPoint = endPoint.directions[endPoint.shortestPath]
-				}
-				shortestPath = append(shortestPath, currentLocation.location)
+		ok := DFS(currentLocation, &endPoint, currentLocation.location, destination, &totalDistance)
+		if ok == true {
+			fmt.Println("shortest path to", endPoint.location, "is", totalDistance, "includes cities:")
+			for endPoint != currentLocation {
+				shortestPath = append(shortestPath, endPoint.location)
+				endPoint = endPoint.directions[endPoint.shortestPath]
 			}
+			shortestPath = append(shortestPath, currentLocation.location)
+		} else {
+			fmt.Printf("%s city not found\n", destination)
 		}
 	} else {
 		panic(err)
