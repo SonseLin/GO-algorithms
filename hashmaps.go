@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type hashBookValue struct {
 	value []int
@@ -31,11 +34,42 @@ func insertPassCollision(hashBook map[int]*hashBookValue, size, value int) {
 	}
 }
 
+func searchForKey(key int, hb map[int]*hashBookValue, size int) (hashBookValue, error) {
+	if size <= key {
+		return hashBookValue{value: []int{0}}, errors.New(fmt.Sprintf("key %d is beyond than size %d", key, size))
+	} else {
+		v, ok := hb[key]
+		if ok == false {
+			errorMessage := fmt.Sprintf("no key %d in hashmap", key)
+			return hashBookValue{value: []int{0}}, errors.New(errorMessage)
+		} else {
+			return *v, nil
+		}
+	}
+}
+
+func deleteForKey(key int, hb map[int]*hashBookValue) {
+	delete(hb, key)
+}
+
 func main() {
 	size := 25
 	hashBook := make(map[int]*hashBookValue, size)
 	processLoop(50, 400, 13, hashBook, size, insertPassCollision)
 	for i, v := range hashBook {
 		fmt.Printf("Hash key [%d] %+v\n", i, v)
+	}
+	v, err := searchForKey(23, hashBook, size)
+	if err == nil {
+		fmt.Println(v.value)
+	} else {
+		fmt.Println(err)
+	}
+	deleteForKey(23, hashBook)
+	v, err = searchForKey(23, hashBook, size)
+	if err == nil {
+		fmt.Println(v.value)
+	} else {
+		fmt.Println(err)
 	}
 }
